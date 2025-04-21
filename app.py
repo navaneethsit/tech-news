@@ -4,7 +4,7 @@ from openai import OpenAI
 
 # ✅ OpenRouter API setup using secrets.toml
 client = OpenAI(
-    api_key=st.secrets["openai"]["api_key"],
+    api_key="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",
     base_url="https://openrouter.ai/api/v1",  # OpenRouter URL
 )
 
