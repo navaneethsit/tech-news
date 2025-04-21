@@ -33,7 +33,7 @@ def collect_news():
 # ✨ Summarization via OpenRouter
 def summarize_article(title, content):
     prompt = f"Summarize this tech or AI news article into 3 concise sentences:\n\nTitle: {title}\nContent: {content}\n\nSummary:"
-    response = openai.chat.completions.create(
+    response = openai.ChatCompletion.create(
         model="mistralai/mistral-7b-instruct",  # ✅ You can use any OpenRouter-supported model here
         messages=[{"role": "user", "content": prompt}],
         max_tokens=150,
