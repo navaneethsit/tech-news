@@ -55,3 +55,5 @@ if st.button("Summarize"):
     st.subheader("📝 Summary")
     st.write(summary)
     st.markdown(f"[🔗 Read full article]({articles[idx]['link']})")
+
+ 
