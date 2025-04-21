@@ -6,9 +6,6 @@ import openai
 openai.api_key=st.secrets["openai"]["api_key"],
 base_url="https://openrouter.ai/api/v1",  # OpenRouter URL
 
-
-st.write(st.secrets)
-
 # 🔗 Supported RSS feeds
 rss_feeds = [
     "https://techcrunch.com/feed/",
