@@ -3,7 +3,7 @@ import openai
 import streamlit as st
 
 # 🗝️ API Config
-openai.api_key = "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"
+openai.api_key = "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"
 openai.api_base = "https://openrouter.ai/api/v1"
 
 # 📡 RSS Feeds
