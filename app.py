@@ -8,6 +8,8 @@ client = OpenAI(
     base_url="https://openrouter.ai/api/v1",  # OpenRouter URL
 )
 
+st.write(st.secrets)
+
 # 🔗 Supported RSS feeds
 rss_feeds = [
     "https://techcrunch.com/feed/",
@@ -57,3 +59,4 @@ if st.button("Summarize"):
     st.subheader("📝 Summary")
     st.write(summary)
     st.markdown(f"[🔗 Read full article]({articles[idx]['link']})")
+
