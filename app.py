@@ -1,12 +1,14 @@
 import feedparser
-import openai
 import streamlit as st
+from openai import OpenAI
 
-# 🗝️ API Config
-openai.api_key = st.secrets["openai"]["api_key"]
-openai.api_base = "https://openrouter.ai/api/v1"
+# ✅ OpenRouter API setup using secrets.toml
+client = OpenAI(
+    api_key=st.secrets["openai"]["api_key"],
+    base_url="https://openrouter.ai/api/v1",  # OpenRouter URL
+)
 
-# 📡 RSS Feeds
+# 🔗 Supported RSS feeds
 rss_feeds = [
     "https://techcrunch.com/feed/",
     "https://www.theverge.com/rss/index.xml",
@@ -16,7 +18,7 @@ rss_feeds = [
     "https://www.wired.com/feed/rss",
 ]
 
-# 🔍 News Collector
+# 📥 News Collector
 @st.cache_data
 def collect_news():
     articles = []
@@ -30,31 +32,28 @@ def collect_news():
                 articles.append({"title": title, "content": content, "link": link})
     return articles
 
-# ✨ Summarizer
+# ✨ Summarization via OpenRouter
 def summarize_article(title, content):
-    prompt = f"Summarize this tech or AI news article into 3 sentences:\n\nTitle: {title}\nContent: {content}\n\nSummary:"
-    response = openai.ChatCompletion.create(
-        model="mistralai/mistral-7b-instruct",
+    prompt = f"Summarize this tech or AI news article into 3 concise sentences:\n\nTitle: {title}\nContent: {content}\n\nSummary:"
+    response = client.chat.completions.create(
+        model="mistralai/mistral-7b-instruct",  # ✅ You can use any OpenRouter-supported model here
         messages=[{"role": "user", "content": prompt}],
-        max_tokens=150
+        max_tokens=150,
     )
-    return response['choices'][0]['message']['content'].strip()
+    return response.choices[0].message.content.strip()
 
-# 🖥️ Streamlit UI
+# 🌐 Streamlit UI
 st.title("📰 Tech & AI News Summarizer")
 
 articles = collect_news()
-titles = [article['title'] for article in articles]
+titles = [article["title"] for article in articles]
 
 choice = st.selectbox("Choose an article to summarize", titles)
 
 if st.button("Summarize"):
     idx = titles.index(choice)
-    summary = summarize_article(articles[idx]['title'], articles[idx]['content'])
+    summary = summarize_article(articles[idx]["title"], articles[idx]["content"])
 
     st.subheader("📝 Summary")
     st.write(summary)
     st.markdown(f"[🔗 Read full article]({articles[idx]['link']})")
-
- 
- 
