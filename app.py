@@ -1,10 +1,6 @@
 import feedparser
-import openai
+import requests
 import streamlit as st
-
-# 🗝️ API Config
-openai.api_key = "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"
-openai.api_base = "https://openrouter.ai/api/v1"
 
 # 📡 RSS Feeds
 rss_feeds = [
@@ -30,15 +26,29 @@ def collect_news():
                 articles.append({"title": title, "content": content, "link": link})
     return articles
 
-# ✨ Summarizer
+# ✨ Summarizer using OpenRouter
 def summarize_article(title, content):
     prompt = f"Summarize this tech or AI news article into 3 sentences:\n\nTitle: {title}\nContent: {content}\n\nSummary:"
-    response = openai.ChatCompletion.create(
-        model="mistralai/mistral-7b-instruct",
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=150
-    )
-    return response['choices'][0]['message']['content'].strip()
+
+    headers = {
+        "Authorization": f"Bearer {st.secrets['openai']['api_key']}",
+        "HTTP-Referer": "https://your-app-name.streamlit.app",  # 🔁 Replace with your actual deployed Streamlit app URL
+        "X-Title": "Tech News Summarizer"
+    }
+
+    data = {
+        "model": "mistralai/mistral-7b-instruct",
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 150
+    }
+
+    response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=data)
+
+    if response.status_code == 200:
+        return response.json()["choices"][0]["message"]["content"].strip()
+    else:
+        st.error(f"API Error: {response.status_code} - {response.text}")
+        return "Error: Could not summarize the article."
 
 # 🖥️ Streamlit UI
 st.title("📰 Tech & AI News Summarizer")
@@ -55,5 +65,4 @@ if st.button("Summarize"):
     st.subheader("📝 Summary")
     st.write(summary)
     st.markdown(f"[🔗 Read full article]({articles[idx]['link']})")
-
  
