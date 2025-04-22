@@ -33,20 +33,21 @@ def collect_news():
 def format_as_news_headline(title, summary):
     return f"📢 *Headline:* **{title}**\n\n🗞️ *News Summary:* {summary}\n\n🧭 For full details, visit the original article."
 
-def summarize_article(content, title=None):
+def summarize_article(content):
     try:
         headers = {
             "Authorization": "Bearer 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"
         }
 
+        # Step 1: Request summary
         response = requests.post(
             API_URL,
             headers=headers,
             json={
                 "inputs": content,
                 "parameters": {
-                    "max_length": 500,
-                    "min_length": 100,
+                    "max_length": 600,
+                    "min_length": 150,
                     "do_sample": False
                 }
             }
@@ -54,14 +55,19 @@ def summarize_article(content, title=None):
 
         if response.status_code == 200:
             raw_summary = response.json()[0]["summary_text"]
-            return format_as_news_headline(title or "Tech Update", raw_summary)
+
+            # Step 2: Reformat as a news-style report
+            lines = raw_summary.strip().replace("\n", " ").split(". ")
+            clean_lines = [f"- {line.strip().rstrip('.')}" for line in lines if line.strip()]
+            news_style = "\n".join(clean_lines[:5])  # limit to 5 bullet points
+
+            return news_style
         else:
             st.error(f"Error during API request: {response.status_code}")
             return None
     except Exception as e:
         st.error(f"API request failed: {e}")
         return None
-
 
 # 🌐 Streamlit UI
 st.title("📰 Daily Tech News")
