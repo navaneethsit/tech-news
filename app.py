@@ -51,20 +51,33 @@ def summarize_article(content):
         return None
 
 # 🌐 Streamlit UI
-st.title("📰 Tech & AI News Summarizer")
+st.markdown("# 📰 **Daily Tech News Summarizer**")
+st.markdown("Stay updated with the latest news and get summaries on the go! Select an article to get a concise summary.")
 
-articles = collect_news()
-titles = [article["title"] for article in articles]
+# Layout with columns
+col1, col2 = st.columns([3, 2])  # Adjust the width ratio as needed
 
-choice = st.selectbox("Choose an article to summarize", titles)
+with col1:
+    articles = collect_news()
+    titles = [article["title"] for article in articles]
+    for i, article in enumerate(articles):
+        if st.button(f"Summarize: {article['title']}"):
+            with st.spinner("Summarizing..."):
+                summary = summarize_article(article["content"])
+            if summary:
+                st.subheader(f"📝 Summary of {article['title']}")
+                st.write(summary)
+                st.markdown(f"[🔗 Read full article]({article['link']})")
+            else:
+                st.error(f"Failed to summarize: {article['title']}")
 
-if st.button("Summarize"):
-    idx = titles.index(choice)
-    with st.spinner("Summarizing the article..."):
-        summary = summarize_article(articles[idx]["content"])
-    if summary:
-        st.subheader("📝 Summary")
-        st.write(summary)
-        st.markdown(f"[🔗 Read full article]({articles[idx]['link']})")
-    else:
-        st.warning("Failed to generate a summary. Please try again.")
+with col2:
+    st.markdown("**Article Previews**")
+    for article in articles:
+        st.markdown(f"**{article['title']}**")
+        st.write(article["content"][:300] + "...")
+        st.write("[Read More](" + article['link'] + ")")
+        st.markdown("---")
+
+# Footer section
+st.markdown("---")
