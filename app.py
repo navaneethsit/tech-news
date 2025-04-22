@@ -68,7 +68,9 @@ choice = st.selectbox("Choose an article to summarize", titles)
 
 if st.button("Summarize"):
     idx = titles.index(choice)
-    summary = summarize_article(articles[idx]["title"], articles[idx]["content"])
+    
+    with st.spinner("Summarizing the article..."):
+        summary = summarize_article(articles[idx]["title"], articles[idx]["content"])
 
     st.subheader("📝 Summary")
     st.write(summary)
