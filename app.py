@@ -40,16 +40,36 @@ def summarize_article(content):
             API_URL,
             headers=headers,
             json={
-                "inputs": content
+                "inputs": content,
                 "parameters": {
-                    "max_length": 500,  # This will make the summary longer
-                    "min_length": 100,  # Adjust minimum length to control the length of the summary
+                    "max_length": 500,  # Max length of summary (more detailed)
+                    "min_length": 100,  # Min length of summary (longer summaries)
                     "do_sample": False   # Set to False to get deterministic results (no randomness)
                 }
             }
         )
+
         if response.status_code == 200:
-            return response.json()[0]["summary_text"]
+            summary = response.json()[0]["summary_text"]
+            # Ensure the summary has more lines and is more detailed
+            if len(summary.split('\n')) < 5:
+                # Try to get more details if summary is too short
+                response = requests.post(
+                    API_URL,
+                    headers=headers,
+                    json={
+                        "inputs": content,
+                        "parameters": {
+                            "max_length": 800,  # Allow even more content if needed
+                            "min_length": 200,  # Ensure summary is long enough
+                            "do_sample": False
+                        }
+                    }
+                )
+                if response.status_code == 200:
+                    summary = response.json()[0]["summary_text"]
+            
+            return summary
         else:
             st.error(f"Error during API request: {response.status_code}")
             return None
