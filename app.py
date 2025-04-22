@@ -35,7 +35,7 @@ def summarize_article(title, content):
 
     headers = {
         "Authorization": f"Bearer {st.secrets['OPENAI_API_KEY']}",
-        "HTTP-Referer": "https://tech-news-101-is.streamlit.app/",  # Replace with your actual Streamlit app URL
+        "HTTP-Referer": "https://tech-news-101-is.streamlit.app/",
         "Content-Type": "application/json"
     }
 
@@ -45,14 +45,18 @@ def summarize_article(title, content):
         "max_tokens": 150
     }
 
-    response = requests.post(
-        "https://openrouter.ai/api/v1/chat/completions",
-        headers=headers,
-        json=payload
-    )
+    try:
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers=headers,
+            json=payload
+        )
+        response.raise_for_status()
+        return response.json()["choices"][0]["message"]["content"].strip()
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error during API request: {e}")
+        return None
 
-    response.raise_for_status()  # Raise error if failed
-    return response.json()["choices"][0]["message"]["content"].strip()
 
 # 🌐 Streamlit UI
 st.title("📰 Tech & AI News Summarizer")
