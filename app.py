@@ -4,7 +4,7 @@ import requests
 import re
 
 #API_URL = "https://api-inference.huggingface.co/models/google/pegasus-xsum"
-API_URL = "https://api-inference.huggingface.co/models/facebook/distilbart-cnn-12-6"
+API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
 
 
 
