@@ -1,6 +1,7 @@
 import feedparser
 import streamlit as st
 import requests
+import re
 
 API_URL = "https://api-inference.huggingface.co/models/google/pegasus-xsum"
 
@@ -29,11 +30,19 @@ def collect_news():
                 articles.append({"title": title, "content": content, "link": link})
     return articles
 
+def clean_content(text):
+    # Remove repeating patterns or boilerplate
+    text = re.sub(r'\b(\w+\s*)\1{2,}', r'\1', text)  # Removes repeated phrases
+    text = re.sub(r'<[^>]+>', '', text)  # Remove HTML tags
+    text = text.replace('\n', ' ').strip()
+    return text
+
 # 📝 Summarize article using Hugging Face
 def format_as_news_headline(title, summary):
     return f"📢 *Headline:* **{title}**\n\n🗞️ *News Summary:* {summary}\n\n🧭 For full details, visit the original article."
 
 def summarize_article(content):
+    content = clean_content(content)
     try:
         headers = {
             "Authorization": "Bearer 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"
@@ -46,7 +55,7 @@ def summarize_article(content):
             json={
                 "inputs": content,
                 "parameters": {
-                    "max_length": 600,
+                    "max_length": 500,
                     "min_length": 150,
                     "do_sample": False
                 }
