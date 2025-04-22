@@ -3,8 +3,12 @@ import streamlit as st
 import requests
 import re
 
+#API_URL = "https://api-inference.huggingface.co/models/google/pegasus-xsum"
 API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
-# 🔗 Supported RSS feeds"
+
+
+
+# 🔗 Supported RSS feeds
 rss_feeds = [
     "https://techcrunch.com/feed/",
     "https://www.theverge.com/rss/index.xml",
@@ -29,30 +33,24 @@ def collect_news():
     return articles
 
 def clean_content(text):
+    # Remove repeating patterns or boilerplate
     text = re.sub(r'\b(\w+\s*)\1{2,}', r'\1', text)  # Removes repeated phrases
     text = re.sub(r'<[^>]+>', '', text)  # Remove HTML tags
     text = text.replace('\n', ' ').strip()
     return text
 
-# 🚫 Clean up hallucinated/irrelevant lines
-def clean_summary(summary):
-    hallucinated_phrases = [
-        "ChatGPT is a chat app", "Steve Wozniacki", "founded in 2007",
-        "lets users communicate with each other via text messages",
-        "owned by a company called ChatGPT"
-    ]
-    for phrase in hallucinated_phrases:
-        summary = summary.replace(phrase, "")
-    return summary.strip()
-
 # 📝 Summarize article using Hugging Face
-def summarize_article(content, title):
+def format_as_news_headline(title, summary):
+    return f"📢 *Headline:* **{title}**\n\n🗞️ *News Summary:* {summary}\n\n🧭 For full details, visit the original article."
+
+def summarize_article(content):
     content = clean_content(content)
     try:
         headers = {
             "Authorization": "Bearer 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"
         }
 
+        # Request summary
         response = requests.post(
             API_URL,
             headers=headers,
@@ -69,21 +67,26 @@ def summarize_article(content, title):
         if response.status_code == 200:
             raw_summary = response.json()[0]["summary_text"]
 
-            # Process into bullet points
-            lines = raw_summary.strip().replace("\n", " ").split(". ")
+            # Reformat and clean the output
+            raw_summary = raw_summary.strip().replace("\n", " ")
+
+            # Handle sentences and combine fragments intelligently
+            lines = raw_summary.split(". ")
             clean_lines = [f"- {line.strip().rstrip('.')}" for line in lines if line.strip()]
-            relevant_summary = "\n".join(clean_lines[:5])
+            news_style = "\n".join(clean_lines[:5])  # limit to 5 bullet points
 
-            # Remove inaccurate parts
-            final_summary = clean_summary(relevant_summary)
+            # Combine fragments if possible
+            full_summary = ' '.join(news_style.split('\n'))
 
-            return f"📢 *Headline:* **{title}**\n\n🗞️ *News Summary:* {final_summary}\n\n🧭 For full details, visit the original article."
+            # Format for a better news-style output
+            return f"📢 *Headline:* **{articles[idx]['title']}**\n\n🗞️ *News Summary:* {full_summary}\n\n🧭 For full details, visit the original article."
         else:
             st.error(f"Error during API request: {response.status_code}")
             return None
     except Exception as e:
         st.error(f"API request failed: {e}")
         return None
+
 
 # 🌐 Streamlit UI
 st.title("📰 Daily Tech News")
@@ -96,7 +99,7 @@ choice = st.selectbox("Choose an article to summarize", titles)
 if st.button("Summarize"):
     idx = titles.index(choice)
     with st.spinner("Summarizing the article..."):
-        summary = summarize_article(articles[idx]["content"], articles[idx]["title"])
+        summary = summarize_article(articles[idx]["content"])
 
     if summary:
         st.subheader("📝 Summary")
