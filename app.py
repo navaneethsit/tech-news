@@ -36,7 +36,7 @@ def summarize_article(content):
     "Authorization": "Bearer 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"  # Replace with your actual Hugging Face API key
 }
 
-          response = requests.post(
+        response = requests.post(
             API_URL,
             headers=headers,
             json={
