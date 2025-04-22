@@ -2,11 +2,9 @@ import feedparser
 import streamlit as st
 import requests
 
-# 🔐 Hugging Face API Key
 API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
-headers = {"Authorization": f"Bearer {st.secrets['huggingface']['api_key']}"}
 
-# 🔗 RSS Feed URLs
+# 🔗 Supported RSS feeds
 rss_feeds = [
     "https://techcrunch.com/feed/",
     "https://www.theverge.com/rss/index.xml",
@@ -16,6 +14,7 @@ rss_feeds = [
     "https://www.wired.com/feed/rss",
 ]
 
+# 📥 News Collector
 @st.cache_data
 def collect_news():
     articles = []
@@ -29,15 +28,17 @@ def collect_news():
                 articles.append({"title": title, "content": content, "link": link})
     return articles
 
-def summarize_article(title, content):
-    headers = {
-        "Authorization": f"Bearer {api_key}"
-    }
-    payload = {
-        "inputs": content
-    }
+# 📝 Summarize article using Hugging Face
+def summarize_article(content):
     try:
-        response = requests.post(api_url, headers=headers, json=payload)
+        headers = {
+            "Authorization": f"Bearer {st.secrets['huggingface']['api_key']}"
+        }
+        response = requests.post(
+            API_URL,
+            headers=headers,
+            json={"inputs": content}
+        )
         if response.status_code == 200:
             return response.json()[0]["summary_text"]
         else:
@@ -47,18 +48,18 @@ def summarize_article(title, content):
         st.error(f"API request failed: {e}")
         return None
 
-# 🌐 UI
+# 🌐 Streamlit UI
 st.title("📰 Tech & AI News Summarizer")
 
 articles = collect_news()
 titles = [article["title"] for article in articles]
+
 choice = st.selectbox("Choose an article to summarize", titles)
 
 if st.button("Summarize"):
     idx = titles.index(choice)
     with st.spinner("Summarizing the article..."):
-        summary = summarize_article(articles[idx]["title"], articles[idx]["content"])
-
+        summary = summarize_article(articles[idx]["content"])
     if summary:
         st.subheader("📝 Summary")
         st.write(summary)
