@@ -3,7 +3,7 @@ import streamlit as st
 import requests
 import re
 
-API_URL = "https://api-inference.huggingface.co/models/philschmid/bart-large-cnn-samsum"
+API_URL = "https://api-inference.huggingface.co/models/google/pegasus-xsum"
 
 # 🔗 Supported RSS feeds
 rss_feeds = [
