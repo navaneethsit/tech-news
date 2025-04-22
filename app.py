@@ -51,33 +51,50 @@ def summarize_article(content):
         return None
 
 # 🌐 Streamlit UI
-st.markdown("# 📰 **Daily Tech News Summarizer**")
+st.markdown("# 📰 **Daily Tech & AI News Summarizer**")
 st.markdown("Stay updated with the latest news and get summaries on the go! Select an article to get a concise summary.")
 
-# Layout with columns
-col1, col2 = st.columns([3, 2])  # Adjust the width ratio as needed
+# Pagination Variables
+if 'page' not in st.session_state:
+    st.session_state.page = 0
 
+# Collect news articles
+articles = collect_news()
+titles = [article["title"] for article in articles]
+
+# Pagination for 10-15 articles per page
+start = st.session_state.page * 10
+end = start + 10
+
+# Show only the headlines of the current page
+current_page_titles = titles[start:end]
+for i, title in enumerate(current_page_titles):
+    if st.button(f"🔍 {title}", key=f"title-{start + i}"):
+        # When user clicks on an article
+        idx = start + i
+        with st.spinner("Summarizing..."):
+            summary = summarize_article(articles[idx]["content"])
+        if summary:
+            st.markdown(f"### **{articles[idx]['title']}**")
+            st.markdown(f"**Link**: [Read Full Article]({articles[idx]['link']})")
+            st.markdown("### **Summary**")
+            st.write(summary)
+        else:
+            st.error(f"Failed to summarize: {articles[idx]['title']}")
+
+# Navigation Buttons (Next/Previous)
+col1, col2 = st.columns([1, 1])
 with col1:
-    articles = collect_news()
-    titles = [article["title"] for article in articles]
-    for i, article in enumerate(articles):
-        if st.button(f"Summarize: {article['title']}"):
-            with st.spinner("Summarizing..."):
-                summary = summarize_article(article["content"])
-            if summary:
-                st.subheader(f"📝 Summary of {article['title']}")
-                st.write(summary)
-                st.markdown(f"[🔗 Read full article]({article['link']})")
-            else:
-                st.error(f"Failed to summarize: {article['title']}")
+    if st.session_state.page > 0:
+        if st.button("◀️ Previous"):
+            st.session_state.page -= 1
+            st.experimental_rerun()
 
 with col2:
-    st.markdown("**Article Previews**")
-    for article in articles:
-        st.markdown(f"**{article['title']}**")
-        st.write(article["content"][:300] + "...")
-        st.write("[Read More](" + article['link'] + ")")
-        st.markdown("---")
+    if end < len(articles):
+        if st.button("Next ▶️"):
+            st.session_state.page += 1
+            st.experimental_rerun()
 
 # Footer section
 st.markdown("---")
