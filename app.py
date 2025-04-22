@@ -33,7 +33,7 @@ def collect_news():
 def summarize_article(content):
     try:
         headers = {
-            "Authorization": f"Bearer {st.secrets['huggingface']['api_key']}"
+            "Authorization": f"Bearer {st.secrets['huggingface']["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"]}"
         }
         response = requests.post(
             API_URL,
