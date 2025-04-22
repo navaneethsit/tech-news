@@ -39,15 +39,7 @@ def summarize_article(content):
         response = requests.post(
             API_URL,
             headers=headers,
-            json={
-                "inputs": content,
-                "parameters": {
-                    "min_length": 80,  # Minimum length of the summary in tokens
-                    "max_length": 180,  # Maximum length of the summary in tokens
-                    "length_penalty": 2.0,  # A higher value makes the summary shorter, lower values longer
-                    "num_beams": 4,  # Increase the number of beams for more accuracy
-                }
-            }
+            json={"inputs": content}
         )
         if response.status_code == 200:
             return response.json()[0]["summary_text"]
@@ -58,75 +50,21 @@ def summarize_article(content):
         st.error(f"API request failed: {e}")
         return None
 
-# 🌐 Streamlit UI with Custom CSS for Page Coloring
-st.markdown("""
-    <style>
-    .main {
-        background-color: #f4f4f9;
-        color: #333;
-    }
-    .header {
-        color: #2e4a7d;
-    }
-    .summary {
-        background-color: #ffffff;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .link {
-        color: #1e90ff;
-        font-weight: bold;
-    }
-    </style>
-""", unsafe_allow_html=True)
+# 🌐 Streamlit UI
+st.title("📰 Daily Tech News")
 
-st.markdown("<h1 class='header'>📰 **Daily Tech & AI News Summarizer**</h1>", unsafe_allow_html=True)
-st.markdown("Stay updated with the latest news and get summaries on the go! Select an article to get a concise summary.")
-
-# Collect news articles
 articles = collect_news()
 titles = [article["title"] for article in articles]
 
-# Display all headlines if no article is selected
-if 'selected_article' not in st.session_state:
-    st.session_state.selected_article = None
+choice = st.selectbox("Choose an article to summarize", titles)
 
-# When no article is selected, show the list of articles
-if st.session_state.selected_article is None:
-    # Show headlines with Next/Previous Pagination
-    articles_per_page = 10
-    page_number = st.number_input("Page Number", min_value=1, max_value=len(titles)//articles_per_page + 1, step=1, key="page_input")
-    
-    start = (page_number - 1) * articles_per_page
-    end = start + articles_per_page
-    current_page_titles = titles[start:end]
-
-    for i, title in enumerate(current_page_titles):
-        if st.button(f"🔍 {title}", key=f"title-{start + i}"):
-            # When user clicks on an article, display only that one
-            idx = start + i
-            st.session_state.selected_article = idx
-            st.experimental_rerun()
-
-# If an article is selected, show only that article
-if st.session_state.selected_article is not None:
-    idx = st.session_state.selected_article
-    selected_article = articles[idx]
-    
-    with st.spinner("Summarizing..."):
-        summary = summarize_article(selected_article["content"])
-    
+if st.button("Summarize"):
+    idx = titles.index(choice)
+    with st.spinner("Summarizing the article..."):
+        summary = summarize_article(articles[idx]["content"])
     if summary:
-        st.markdown(f"### **{selected_article['title']}**", unsafe_allow_html=True)
-        st.markdown(f"**Link**: [Read Full Article]({selected_article['link']})", unsafe_allow_html=True)
-        st.markdown("<div class='summary'>", unsafe_allow_html=True)
+        st.subheader("📝 Summary")
         st.write(summary)
-        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown(f"[🔗 Read full article]({articles[idx]['link']})")
     else:
-        st.error(f"Failed to summarize: {selected_article['title']}")
-    
-    # Button to go back to the list of articles
-    if st.button("Back to Articles"):
-        st.session_state.selected_article = None
-        st.experimental_rerun()
+        st.warning("Failed to generate a summary. Please try again.")
