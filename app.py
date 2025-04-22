@@ -50,7 +50,7 @@ def summarize_article(content):
             "Authorization": "Bearer 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"
         }
 
-        # Step 1: Request summary
+        # Request summary
         response = requests.post(
             API_URL,
             headers=headers,
@@ -67,12 +67,19 @@ def summarize_article(content):
         if response.status_code == 200:
             raw_summary = response.json()[0]["summary_text"]
 
-            # Step 2: Reformat as a news-style report
-            lines = raw_summary.strip().replace("\n", " ").split(". ")
+            # Reformat and clean the output
+            raw_summary = raw_summary.strip().replace("\n", " ")
+
+            # Handle sentences and combine fragments intelligently
+            lines = raw_summary.split(". ")
             clean_lines = [f"- {line.strip().rstrip('.')}" for line in lines if line.strip()]
             news_style = "\n".join(clean_lines[:5])  # limit to 5 bullet points
 
-            return news_style
+            # Combine fragments if possible
+            full_summary = ' '.join(news_style.split('\n'))
+
+            # Format for a better news-style output
+            return f"📢 *Headline:* **{articles[idx]['title']}**\n\n🗞️ *News Summary:* {full_summary}\n\n🧭 For full details, visit the original article."
         else:
             st.error(f"Error during API request: {response.status_code}")
             return None
