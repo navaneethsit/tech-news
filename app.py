@@ -3,9 +3,8 @@ import streamlit as st
 import requests
 import re
 
-API_URL = "https://api-inference.huggingface.co/models/google/pegasus-xsum"
-
-# 🔗 Supported RSS feeds
+API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
+# 🔗 Supported RSS feeds"
 rss_feeds = [
     "https://techcrunch.com/feed/",
     "https://www.theverge.com/rss/index.xml",
