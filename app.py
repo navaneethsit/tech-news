@@ -36,10 +36,18 @@ def summarize_article(content):
     "Authorization": "Bearer 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"  # Replace with your actual Hugging Face API key
 }
 
-        response = requests.post(
+          response = requests.post(
             API_URL,
             headers=headers,
-            json={"inputs": content}
+            json={
+                "inputs": content,
+                "parameters": {
+                    "min_length": 80,  # Minimum length of the summary in tokens
+                    "max_length": 180,  # Maximum length of the summary in tokens
+                    "length_penalty": 2.0,  # A higher value makes the summary shorter, lower values longer
+                    "num_beams": 4,  # Increase the number of beams for more accuracy
+                }
+            }
         )
         if response.status_code == 200:
             return response.json()[0]["summary_text"]
@@ -50,51 +58,75 @@ def summarize_article(content):
         st.error(f"API request failed: {e}")
         return None
 
-# 🌐 Streamlit UI
-st.markdown("# 📰 **Daily Tech & AI News Summarizer**")
-st.markdown("Stay updated with the latest news and get summaries on the go! Select an article to get a concise summary.")
+# 🌐 Streamlit UI with Custom CSS for Page Coloring
+st.markdown("""
+    <style>
+    .main {
+        background-color: #f4f4f9;
+        color: #333;
+    }
+    .header {
+        color: #2e4a7d;
+    }
+    .summary {
+        background-color: #ffffff;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .link {
+        color: #1e90ff;
+        font-weight: bold;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-# Pagination Variables
-if 'page' not in st.session_state:
-    st.session_state.page = 0
+st.markdown("<h1 class='header'>📰 **Daily Tech & AI News Summarizer**</h1>", unsafe_allow_html=True)
+st.markdown("Stay updated with the latest news and get summaries on the go! Select an article to get a concise summary.")
 
 # Collect news articles
 articles = collect_news()
 titles = [article["title"] for article in articles]
 
-# Pagination for 10-15 articles per page
-start = st.session_state.page * 10
-end = start + 10
+# Display all headlines if no article is selected
+if 'selected_article' not in st.session_state:
+    st.session_state.selected_article = None
 
-# Show only the headlines of the current page
-current_page_titles = titles[start:end]
-for i, title in enumerate(current_page_titles):
-    if st.button(f"🔍 {title}", key=f"title-{start + i}"):
-        # When user clicks on an article
-        idx = start + i
-        with st.spinner("Summarizing..."):
-            summary = summarize_article(articles[idx]["content"])
-        if summary:
-            st.markdown(f"### **{articles[idx]['title']}**")
-            st.markdown(f"**Link**: [Read Full Article]({articles[idx]['link']})")
-            st.markdown("### **Summary**")
-            st.write(summary)
-        else:
-            st.error(f"Failed to summarize: {articles[idx]['title']}")
+# When no article is selected, show the list of articles
+if st.session_state.selected_article is None:
+    # Show headlines with Next/Previous Pagination
+    articles_per_page = 10
+    page_number = st.number_input("Page Number", min_value=1, max_value=len(titles)//articles_per_page + 1, step=1, key="page_input")
+    
+    start = (page_number - 1) * articles_per_page
+    end = start + articles_per_page
+    current_page_titles = titles[start:end]
 
-# Navigation Buttons (Next/Previous)
-col1, col2 = st.columns([1, 1])
-with col1:
-    if st.session_state.page > 0:
-        if st.button("◀️ Previous"):
-            st.session_state.page -= 1
+    for i, title in enumerate(current_page_titles):
+        if st.button(f"🔍 {title}", key=f"title-{start + i}"):
+            # When user clicks on an article, display only that one
+            idx = start + i
+            st.session_state.selected_article = idx
             st.experimental_rerun()
 
-with col2:
-    if end < len(articles):
-        if st.button("Next ▶️"):
-            st.session_state.page += 1
-            st.experimental_rerun()
-
-# Footer section
-st.markdown("---")
+# If an article is selected, show only that article
+if st.session_state.selected_article is not None:
+    idx = st.session_state.selected_article
+    selected_article = articles[idx]
+    
+    with st.spinner("Summarizing..."):
+        summary = summarize_article(selected_article["content"])
+    
+    if summary:
+        st.markdown(f"### **{selected_article['title']}**", unsafe_allow_html=True)
+        st.markdown(f"**Link**: [Read Full Article]({selected_article['link']})", unsafe_allow_html=True)
+        st.markdown("<div class='summary'>", unsafe_allow_html=True)
+        st.write(summary)
+        st.markdown("</div>", unsafe_allow_html=True)
+    else:
+        st.error(f"Failed to summarize: {selected_article['title']}")
+    
+    # Button to go back to the list of articles
+    if st.button("Back to Articles"):
+        st.session_state.selected_article = None
+        st.experimental_rerun()
