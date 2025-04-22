@@ -3,10 +3,7 @@ import streamlit as st
 import requests
 import re
 
-#API_URL = "https://api-inference.huggingface.co/models/google/pegasus-xsum"
 API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
-
-
 
 # 🔗 Supported RSS feeds
 rss_feeds = [
@@ -33,24 +30,30 @@ def collect_news():
     return articles
 
 def clean_content(text):
-    # Remove repeating patterns or boilerplate
     text = re.sub(r'\b(\w+\s*)\1{2,}', r'\1', text)  # Removes repeated phrases
     text = re.sub(r'<[^>]+>', '', text)  # Remove HTML tags
     text = text.replace('\n', ' ').strip()
     return text
 
-# 📝 Summarize article using Hugging Face
-def format_as_news_headline(title, summary):
-    return f"📢 *Headline:* **{title}**\n\n🗞️ *News Summary:* {summary}\n\n🧭 For full details, visit the original article."
+# 🚫 Clean up hallucinated/irrelevant lines
+def clean_summary(summary):
+    hallucinated_phrases = [
+        "ChatGPT is a chat app", "Steve Wozniacki", "founded in 2007",
+        "lets users communicate with each other via text messages",
+        "owned by a company called ChatGPT"
+    ]
+    for phrase in hallucinated_phrases:
+        summary = summary.replace(phrase, "")
+    return summary.strip()
 
-def summarize_article(content):
+# 📝 Summarize article using Hugging Face
+def summarize_article(content, title):
     content = clean_content(content)
     try:
         headers = {
             "Authorization": "Bearer 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"
         }
 
-        # Request summary from HuggingFace
         response = requests.post(
             API_URL,
             headers=headers,
@@ -67,16 +70,15 @@ def summarize_article(content):
         if response.status_code == 200:
             raw_summary = response.json()[0]["summary_text"]
 
-            # Reformatting the summary
-            raw_summary = raw_summary.strip().replace("\n", " ")
-            lines = raw_summary.split(". ")
+            # Process into bullet points
+            lines = raw_summary.strip().replace("\n", " ").split(". ")
             clean_lines = [f"- {line.strip().rstrip('.')}" for line in lines if line.strip()]
-            
-            # Only keep lines that seem to be directly related to the article
             relevant_summary = "\n".join(clean_lines[:5])
 
-            return f"📢 *Headline:* **{articles[idx]['title']}**\n\n🗞️ *News Summary:* {relevant_summary}\n\n🧭 For full details, visit the original article."
+            # Remove inaccurate parts
+            final_summary = clean_summary(relevant_summary)
 
+            return f"📢 *Headline:* **{title}**\n\n🗞️ *News Summary:* {final_summary}\n\n🧭 For full details, visit the original article."
         else:
             st.error(f"Error during API request: {response.status_code}")
             return None
@@ -95,7 +97,7 @@ choice = st.selectbox("Choose an article to summarize", titles)
 if st.button("Summarize"):
     idx = titles.index(choice)
     with st.spinner("Summarizing the article..."):
-        summary = summarize_article(articles[idx]["content"])
+        summary = summarize_article(articles[idx]["content"], articles[idx]["title"])
 
     if summary:
         st.subheader("📝 Summary")
