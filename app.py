@@ -2,7 +2,7 @@ import feedparser
 import streamlit as st
 import requests
 
-API_URL = "https://api-inference.huggingface.co/models/sshleifer/distilbart-cnn-12-6"
+API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
 
 
 # 🔗 Supported RSS feeds
