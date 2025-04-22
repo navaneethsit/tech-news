@@ -30,11 +30,14 @@ def collect_news():
     return articles
 
 # 📝 Summarize article using Hugging Face
-def summarize_article(content):
+def format_as_news_headline(title, summary):
+    return f"📢 *Headline:* **{title}**\n\n🗞️ *News Summary:* {summary}\n\n🧭 For full details, visit the original article."
+
+def summarize_article(content, title=None):
     try:
         headers = {
-    "Authorization": "Bearer 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"  # Replace with your actual Hugging Face API key
-}
+            "Authorization": "Bearer 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"
+        }
 
         response = requests.post(
             API_URL,
@@ -42,40 +45,23 @@ def summarize_article(content):
             json={
                 "inputs": content,
                 "parameters": {
-                    "max_length": 500,  # Max length of summary (more detailed)
-                    "min_length": 100,  # Min length of summary (longer summaries)
-                    "do_sample": False   # Set to False to get deterministic results (no randomness)
+                    "max_length": 500,
+                    "min_length": 100,
+                    "do_sample": False
                 }
             }
         )
 
         if response.status_code == 200:
-            summary = response.json()[0]["summary_text"]
-            # Ensure the summary has more lines and is more detailed
-            if len(summary.split('\n')) < 5:
-                # Try to get more details if summary is too short
-                response = requests.post(
-                    API_URL,
-                    headers=headers,
-                    json={
-                        "inputs": content,
-                        "parameters": {
-                            "max_length": 800,  # Allow even more content if needed
-                            "min_length": 200,  # Ensure summary is long enough
-                            "do_sample": False
-                        }
-                    }
-                )
-                if response.status_code == 200:
-                    summary = response.json()[0]["summary_text"]
-            
-            return summary
+            raw_summary = response.json()[0]["summary_text"]
+            return format_as_news_headline(title or "Tech Update", raw_summary)
         else:
             st.error(f"Error during API request: {response.status_code}")
             return None
     except Exception as e:
         st.error(f"API request failed: {e}")
         return None
+
 
 # 🌐 Streamlit UI
 st.title("📰 Daily Tech News")
@@ -88,7 +74,8 @@ choice = st.selectbox("Choose an article to summarize", titles)
 if st.button("Summarize"):
     idx = titles.index(choice)
     with st.spinner("Summarizing the article..."):
-        summary = summarize_article(articles[idx]["content"])
+        summary = summarize_article(articles[idx]["content"], articles[idx]["title"])
+
     if summary:
         st.subheader("📝 Summary")
         st.write(summary)
