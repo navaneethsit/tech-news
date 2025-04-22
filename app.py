@@ -1,10 +1,10 @@
 import feedparser
 import streamlit as st
-import openai
+import requests
 
 # 🗝️ API Config
-openai.api_key = st.secrets["OPENAI_API_KEY"]
-openai.api_base = "https://openrouter.ai/api/v1"
+# openai.api_key = st.secrets["OPENAI_API_KEY"]
+# openai.api_base = "https://openrouter.ai/api/v1"
 
 # 🔗 Supported RSS feeds
 rss_feeds = [
@@ -30,15 +30,29 @@ def collect_news():
                 articles.append({"title": title, "content": content, "link": link})
     return articles
 
-# ✨ Summarization via OpenRouter
 def summarize_article(title, content):
     prompt = f"Summarize this tech or AI news article into 3 concise sentences:\n\nTitle: {title}\nContent: {content}\n\nSummary:"
-    response = openai.ChatCompletion.create(
-        model="mistralai/mistral-7b-instruct",  # ✅ You can use any OpenRouter-supported model here
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=150,
+
+    headers = {
+        "Authorization": f"Bearer {st.secrets['OPENAI_API_KEY']}",
+        "HTTP-Referer": "https://tech-news-101-is.streamlit.app/",  # Replace with your actual Streamlit app URL
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "model": "mistralai/mistral-7b-instruct",
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 150
+    }
+
+    response = requests.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        headers=headers,
+        json=payload
     )
-    return response.choices[0].message.content.strip()
+
+    response.raise_for_status()  # Raise error if failed
+    return response.json()["choices"][0]["message"]["content"].strip()
 
 # 🌐 Streamlit UI
 st.title("📰 Tech & AI News Summarizer")
