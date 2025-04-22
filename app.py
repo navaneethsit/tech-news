@@ -3,7 +3,7 @@ import streamlit as st
 import requests
 
 # Fetch API Key securely from Streamlit secrets (ensure you add this in secrets.toml)
-api_key = st.secrets["huggingface_api_key"]  # Update the key name to match your secret's name
+api_key = st.secrets["api_key"]  # Update the key name to match your secret's name
 url = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
 
 # 🔗 Supported RSS feeds
