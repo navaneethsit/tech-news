@@ -1,10 +1,10 @@
 import feedparser
 import streamlit as st
-import openai 
+import openai
 
-# ✅ OpenRouter API setup using secrets.toml
-openai.api_key="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"
-base_url="https://openrouter.ai/api/v1"  # OpenRouter URL
+# 🗝️ API Config
+openai.api_key = st.secrets["OPENAI_API_KEY"]
+openai.api_base = "https://openrouter.ai/api/v1"
 
 # 🔗 Supported RSS feeds
 rss_feeds = [
