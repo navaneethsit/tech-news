@@ -3,8 +3,8 @@ import streamlit as st
 import requests
 
 # 🔐 Hugging Face API Key
-api_key = st.secrets["huggingface"]["api_key"]
-api_url = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
+API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
+headers = {"Authorization": f"Bearer {st.secrets['huggingface']['api_key']}"}
 
 # 🔗 RSS Feed URLs
 rss_feeds = [
